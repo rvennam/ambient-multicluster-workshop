@@ -183,7 +183,7 @@ kubectl create namespace istio-egress
 istioctl waypoint apply --enroll-namespace --namespace istio-egress
 ```
 
-```bash
+```yaml
 kubectl --context=${CLUSTER1} apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
@@ -207,7 +207,7 @@ kubectl --context=${CLUSTER1} apply -f - <<EOF
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: httpbin
+  name: bookinfo
   namespace: istio-egress
 spec:
   targetRefs:
@@ -218,7 +218,7 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/bookinfo/sa/ratings"]
+        principals: ["cluster.local/ns/bookinfo/sa/bookinfo-ratings"]
 EOF
 ```
 
