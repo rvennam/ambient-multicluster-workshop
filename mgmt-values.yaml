@@ -1,0 +1,32 @@
+common:
+  cluster: cluster1
+glooAgent:
+  enabled: true
+  runAsSidecar: true
+  relay:
+    serverAddress: gloo-mesh-mgmt-server.gloo-mesh:9900
+glooAnalyzer:
+  enabled: true
+glooMgmtServer:
+  enabled: true
+  registerCluster: true
+  policyApis:
+    enabled: true
+glooInsightsEngine:
+  enabled: true
+glooUi:
+  enabled: true
+prometheus:
+  enabled: true
+redis:
+  deployment:
+    enabled: true
+telemetryCollector:
+  enabled: true
+  mode: deployment
+  replicaCount: 1
+telemetryGateway:
+  enabled: true
+installEnterpriseCrds: false
+featureGates:
+  ConfigDistribution: true
