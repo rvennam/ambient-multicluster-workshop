@@ -1,3 +1,4 @@
+# Solo.io Istio Ambient Multi-cluster Workshop
 ### Env
 
 1. Create two clusters and set the env vars below to their context
@@ -9,7 +10,7 @@ export CLUSTER1=gke_ambient_one
 export CLUSTER2=gke_ambient_two
 ```
 
-# Deploy Bookinfo sample to both clusters
+### Deploy Bookinfo sample to both clusters
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
   kubectl --context ${context} create ns bookinfo 
