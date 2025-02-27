@@ -198,7 +198,7 @@ spec:
     name: http
     protocol: HTTP
   resolution: DNS
-  EOF
+EOF
 ```
 
 Only allow ratings to call httpbin.org
