@@ -278,7 +278,7 @@ kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.ite
 ## Gloo Management Plane
 
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.0-rc2 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.0 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
