@@ -1,5 +1,7 @@
 # Solo.io Istio Ambient Multi-cluster Workshop
 
+In this workshop, you will set up Istio Ambient in a multi-cluster environment, deploy a sample Bookinfo app, and explore how Solo.io Ambient enables secure service-to-service communication in all directions.
+
 ![overview](overview.png)
 
 |[![Gloo Mesh Ambient Multi-Cluster Video](yt-video.png)](https://youtu.be/18dpBukOYSk) |
@@ -292,12 +294,16 @@ kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.ite
 
 ## Gloo Management Plane
 
+Optionally, you can deploy the Gloo Management Plane that provides many benefits and features. For this lab, we'll just focus on the UI and the service graph. 
+
+Start by downloading the meshctl cli
 ```
 curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.0 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
-### cluster1 will be both workload and managment:
+
+Cluster1 will act as the management cluster and workload cluster:
 ```bash
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
@@ -307,7 +313,7 @@ helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
-### Register cluster2 as a workload cluster to cluster1:
+Then, register cluster2 as a workload cluster to cluster1:
 ```bash
 export TELEMETRY_GATEWAY_ADDRESS=$(kubectl get svc -n gloo-mesh gloo-telemetry-gateway --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}"):4317
 
