@@ -296,3 +296,9 @@ export TELEMETRY_GATEWAY_ADDRESS=$(kubectl get svc -n gloo-mesh gloo-telemetry-g
 
 meshctl cluster register cluster2  --kubecontext $CLUSTER1 --profiles gloo-core-agent --remote-context $CLUSTER2 --telemetry-server-address $TELEMETRY_GATEWAY_ADDRESS
 ```
+
+Launch the UI:
+```
+meshctl dashboard
+```
+![Gloo Mesh UI](gloo-mesh-ui.png)
