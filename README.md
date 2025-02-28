@@ -1,4 +1,6 @@
 # Solo.io Istio Ambient Multi-cluster Workshop
+
+![overview](overview.png)
 ### Env
 
 1. Create two clusters and set the env vars below to their context
