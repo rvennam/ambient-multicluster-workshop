@@ -189,6 +189,12 @@ done
 
 # Egress Gateway
 
+In addition to managing traffic coming into the mesh and within the mesh, ambient mesh can also manage traffic leaving the mesh. This includes observing the traffic and enforcing policies against it.
+
+Just as a waypoint can be used for traffic addressed to a service inside your cluster, a gateway can be used for traffic that leaves your cluster.
+
+In Istio, you can direct traffic to this gateway on a host-by-host basis using the ServiceEntry resource, which is bound to a waypoint used for egress control.
+
 This section will only use $CLUSTER1.
 
 First, we'll deploy an egress gateway in the `istio-egress` namespace, and call it `egress-gateway`
