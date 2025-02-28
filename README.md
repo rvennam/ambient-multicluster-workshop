@@ -1,6 +1,12 @@
 # Solo.io Istio Ambient Multi-cluster Workshop
 
 ![overview](overview.png)
+
+<div align="center">
+  <a href="https://youtu.be/18dpBukOYSk">
+    <img src="https://img.youtube.com/vi/18dpBukOYSk/0.jpg" alt="Gloo Mesh Istio Ambient Multi-Cluster Demo" width="560">
+  </a>
+</div>
 ### Env
 
 1. Create two clusters and set the env vars below to their context
