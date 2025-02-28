@@ -170,8 +170,14 @@ curl $(kubectl get svc -n bookinfo bookinfo-gateway-istio --context $CLUSTER1 -o
 Voila! This should be round robinning between productpage on both clusters.
 
 
-### L7 - Istio Waypoint
-For L7 advanced traffic control, we need a waypoint. In this section, we will deploy a standard Isito waypoint, but in part 2, we will replace thsi waypoint with a Gloo Gateway as waypoint.
+### Istio Waypoints for L7 Functionality
+
+Istio Waypoints enable Layer 7 traffic management in an Ambient Mesh, providing advanced capabilities like routing, authorization, observability, and security policies. Acting as dedicated traffic proxies, Waypoints handle HTTP, gRPC, and other application-layer protocols, seamlessly integrating with Istio’s security model to enforce fine-grained traffic control.
+
+Let’s apply a Waypoint for the bookinfo namespace and create a header-based routing policy:
+	•	Traffic going to reviews Service should route to reviews-v1 by default.
+	•	Requests with the header end-user: jason should be directed to reviews-v2 instead.
+
 
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
