@@ -2,11 +2,8 @@
 
 ![overview](overview.png)
 
-<div align="center">
-  <a href="https://youtu.be/18dpBukOYSk">
-    <img src="https://img.youtube.com/vi/18dpBukOYSk/0.jpg" alt="Gloo Mesh Istio Ambient Multi-Cluster Demo" width="560">
-  </a>
-</div>
+|[![Gloo Mesh Ambient Multi-Cluster Video](yt-video.png)](https://youtu.be/18dpBukOYSk) |
+|:-----------------------------:|
 ### Env
 
 1. Create two clusters and set the env vars below to their context
