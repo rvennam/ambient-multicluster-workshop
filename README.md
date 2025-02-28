@@ -178,18 +178,47 @@ done
 
 # Egress Gateway
 
+This section will only use $CLUSTER1.
+
+First, we'll deploy an egress gateway in the `istio-egress` namespace, and call it `egress-gateway`
+
 ```bash
 kubectl create namespace istio-egress
-istioctl waypoint apply --enroll-namespace --namespace istio-egress
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: egress-gateway
+  namespace: istio-egress
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+    allowedRoutes:
+      namespaces:
+        from: All
+EOF
 ```
 
+If you plan on creating SE's in the istio-egress namespace, you can label just the ns and not need to label every SE:
+```
+kubectl label ns istio-egress istio.io/use-waypoint=egress-gateway
+```
+
+Define httpbin.org on port 40 and 443 as external hosts using ServiceEntries in the `bookinfo` namespace. Notice that we're labeling the ServiceEntry to use the egress gateway
+
 ```yaml
-kubectl --context=${CLUSTER1} apply -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: httpbin.org
-  namespace: istio-egress
+  namespace: bookinfo
+  labels:
+    istio.io/use-waypoint: egress-gateway
+    istio.io/use-waypoint-namespace: istio-egress
 spec:
   hosts:
   - httpbin.org
@@ -197,18 +226,30 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: httpbin.org-tls
+  namespace: bookinfo
+spec:
+  host: httpbin.org
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
 EOF
 ```
 
 Only allow ratings to call httpbin.org
 ```yaml
-kubectl --context=${CLUSTER1} apply -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: bookinfo
-  namespace: istio-egress
+  name: ratings-to-httpbin
+  namespace: bookinfo
 spec:
   targetRefs:
   - kind: ServiceEntry
@@ -220,6 +261,16 @@ spec:
     - source:
         principals: ["cluster.local/ns/bookinfo/sa/bookinfo-ratings"]
 EOF
+```
+
+You should now be able to call httpbin.org from ratings:
+```bash
+kubectl exec -it $(kubectl get pod -l app=ratings -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
+```
+
+But NOT reviews:
+```
+kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
 ```
 
 ## Gloo Management Plane
@@ -234,8 +285,8 @@ export PATH=$HOME/.gloo-mesh/bin:$PATH
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.0-rc2
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.0-rc2 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.0
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.0 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
