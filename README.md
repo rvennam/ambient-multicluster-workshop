@@ -23,7 +23,7 @@ chmod +x ~/.istioctl/bin/istioctl
 export PATH=${HOME}/.istioctl/bin:${PATH}
 ```
 
-4. Download the latest istio-solo, 1.24.3 or greater. Verify using `istioctl version`
+3. Download the latest istio-solo, 1.24.3 or greater. Verify using `istioctl version`
 
 Set env vars
 ```bash
