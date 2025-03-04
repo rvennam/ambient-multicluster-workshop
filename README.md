@@ -9,7 +9,7 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 ### Env
 
 1. Create two clusters and set the env vars below to their context
-2. Install Solo's IstioCTL Binary:
+2. Install Solo's `istioctl` Binary:
 ```bash
 # URL format is as follows: curl -fSsLO https://storage.googleapis.com/istio-binaries-${OBFUSCATED_STRING}/${VERSION}-${FLAVOR}/istio-${VERSION}-${FLAVOR}-${OS}-${ARCH}.tar.gz
 # For example 1.24.3 m1 solo istioctl download: curl -fSsLO https://storage.googleapis.com/istio-binaries-4d37697f9711/1.24.3-solo/istio-1.24.3-solo-osx-arm64.tar.gz
