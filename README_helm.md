@@ -9,6 +9,18 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 ### Env
 
 1. Create two clusters and set the env vars below to their context
+
+```bash
+export CLUSTER1=gke_ambient_one # UPDATE THIS
+export CLUSTER2=gke_ambient_two # UPDATE THIS
+export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
+
+export ISTIO_VERSION=1.25.0
+export REPO_KEY=e038d180f90a
+export ISTIO_IMAGE=${ISTIO_VERSION}-solo
+export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
+export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
+```
 2. Download Solo's 1.25.0 `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
@@ -21,20 +33,7 @@ chmod +x ~/.istioctl/bin/istioctl
 export PATH=${HOME}/.istioctl/bin:${PATH}
 ```
 
-1. Verify using `istioctl version`
-
-Set env vars
-```bash
-export CLUSTER1=gke_ambient_one # UPDATE THIS
-export CLUSTER2=gke_ambient_two # UPDATE THIS
-export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
-
-export ISTIO_VERSION=1.25.0
-export REPO_KEY=e038d180f90a
-export ISTIO_IMAGE=${ISTIO_VERSION}-solo
-export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
-export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
-```
+3. Verify using `istioctl version`
 
 ### Deploy Bookinfo sample to both clusters
 ```bash
