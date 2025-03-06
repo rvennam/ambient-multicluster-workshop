@@ -35,6 +35,16 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 
 3. Verify using `istioctl version`
 
+# Clean up previous Istio installations
+
+```
+```bash
+kubectl --context=$CLUSTER1 delete smc --all
+kubectl --context=$CLUSTER1 delete smc --all
+istioctl uninstall --purge -y --context $CLUSTER1
+istioctl uninstall --purge -y --context $CLUSTER2
+```
+
 ### Deploy Bookinfo sample to both clusters
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
@@ -99,10 +109,7 @@ EOF
 done
 ```
 
-```bash
-istioctl uninstall --purge -y --context $CLUSTER1
-istioctl uninstall --purge -y --context $CLUSTER2
-```
+Apply the CRDs for the Kubernetes Gateway API to your cluster, which are required to create components such as waypoint proxies for L7 traffic policies, gateways with the Gateway resource, and more.
 
 ```
 kubectl --context $CLUSTER1 apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
@@ -208,7 +215,7 @@ global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
   variant: distroless
-  platform: gke
+  # platform: gke # UNCOMMENT FOR GKE
 profile: ambient
 EOF
 ```
@@ -229,7 +236,7 @@ global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
   variant: distroless
-  platform: gke
+  # platform: gke # UNCOMMENT FOR GKE
 profile: ambient
 EOF
 ```
