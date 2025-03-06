@@ -73,7 +73,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.24.3
+  version: 1.25.0
   cluster: cluster1
   network: cluster1
 EOF
@@ -84,7 +84,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.24.3
+  version: 1.25.0
   cluster: cluster2
   network: cluster2
 EOF
