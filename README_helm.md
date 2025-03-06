@@ -40,7 +40,7 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 ```
 ```bash
 kubectl --context=$CLUSTER1 delete smc --all
-kubectl --context=$CLUSTER1 delete smc --all
+kubectl --context=$CLUSTER2 delete smc --all
 istioctl uninstall --purge -y --context $CLUSTER1
 istioctl uninstall --purge -y --context $CLUSTER2
 ```
