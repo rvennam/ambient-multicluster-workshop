@@ -35,7 +35,7 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 
 3. Verify using `istioctl version`
 
-# Clean up previous Istio installations
+### Clean up previous Istio installations
 
 ```
 ```bash
