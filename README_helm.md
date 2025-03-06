@@ -25,8 +25,15 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 
 Set env vars
 ```bash
-export CLUSTER1=gke_ambient_one
-export CLUSTER2=gke_ambient_two
+export CLUSTER1=gke_ambient_one # UPDATE THIS
+export CLUSTER2=gke_ambient_two # UPDATE THIS
+export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
+
+export ISTIO_VERSION=1.25.0
+export REPO_KEY=e038d180f90a
+export ISTIO_IMAGE=${ISTIO_VERSION}-solo
+export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
+export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
 ```
 
 ### Deploy Bookinfo sample to both clusters
@@ -57,39 +64,238 @@ kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
 --from-file=./certs/cluster2/cert-chain.pem
 ```
 
-### Install Istio on both clusters using Gloo Operator
-
-Install the operator
+GKE Only:
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
-  helm upgrade --install --kube-context=${context} gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator --version 0.1.0-rc.1 -n gloo-system --create-namespace &
+kubectl --context  ${context} -n istio-system apply -f - <<EOF
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: gcp-critical-pods
+  namespace: istio-system
+spec:
+  hard:
+    pods: 1000
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - system-node-critical
+EOF
 done
 ```
-Use the `ServiceMeshController` resource to install Istio on both clusters
+
 
 ```bash
-kubectl --context=${CLUSTER1} apply -f - <<EOF
-apiVersion: operator.gloo.solo.io/v1
-kind: ServiceMeshController
-metadata:
-  name: istio
-spec:
-  version: 1.24.3
-  cluster: cluster1
-  network: cluster1
+for context in ${CLUSTER1} ${CLUSTER2}; do
+    helm upgrade --install istio-base oci://${HELM_REPO}/base \
+    --namespace istio-system \
+    --create-namespace \
+    --version ${ISTIO_IMAGE} \
+    -f - <<EOF
+defaultRevision: ""
+profile: ambient
 EOF
+done
+```
 
-kubectl --context=${CLUSTER2} apply -f - <<EOF
-apiVersion: operator.gloo.solo.io/v1
-kind: ServiceMeshController
-metadata:
-  name: istio
-spec:
-  version: 1.24.3
-  cluster: cluster2
-  network: cluster2
+```bash
+istioctl uninstall --purge -y --context $CLUSTER1
+istioctl uninstall --purge -y --context $CLUSTER2
+```
+
+```
+kubectl --context $CLUSTER1 apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+kubectl --context $CLUSTER2 apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+```
+
+Install istiod on cluster1 and cluster2
+```bash
+helm upgrade --install istiod oci://${HELM_REPO}/istiod \
+--namespace istio-system \
+--kube-context ${CLUSTER1} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+env:
+  # Assigns IP addresses to multicluster services
+  PILOT_ENABLE_IP_AUTOALLOCATE: "true"
+  # Disable selecting workload entries for local service routing.
+  # Required for Gloo VirtualDestinaton functionality.
+  PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
+  # Required when meshConfig.trustDomain is set
+  PILOT_SKIP_VALIDATE_TRUST_DOMAIN: "true"
+global:
+  hub: ${REPO}
+  multiCluster:
+    clusterName: cluster1
+  network: cluster1
+  proxy:
+    clusterDomain: cluster.local
+  tag: ${ISTIO_IMAGE}
+istio_cni:
+  namespace: istio-system
+  enabled: true
+meshConfig:
+  accessLogFile: /dev/stdout
+  defaultConfig:
+    proxyMetadata:
+      ISTIO_META_DNS_AUTO_ALLOCATE: "true"
+      ISTIO_META_DNS_CAPTURE: "true"
+# Required to enable multicluster support
+platforms:
+  peering:
+    enabled: true
+profile: ambient
+license:
+    value: ${GLOO_MESH_LICENSE_KEY}
 EOF
 ```
+```bash
+helm upgrade --install istiod oci://${HELM_REPO}/istiod \
+--namespace istio-system \
+--kube-context ${CLUSTER2} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+env:
+  # Assigns IP addresses to multicluster services
+  PILOT_ENABLE_IP_AUTOALLOCATE: "true"
+  # Disable selecting workload entries for local service routing.
+  # Required for Gloo VirtualDestinaton functionality.
+  PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
+  # Required when meshConfig.trustDomain is set
+  PILOT_SKIP_VALIDATE_TRUST_DOMAIN: "true"
+global:
+  hub: ${REPO}
+  multiCluster:
+    clusterName: cluster2
+  network: cluster2
+  proxy:
+    clusterDomain: cluster.local
+  tag: ${ISTIO_IMAGE}
+istio_cni:
+  namespace: istio-system
+  enabled: true
+meshConfig:
+  accessLogFile: /dev/stdout
+  defaultConfig:
+    proxyMetadata:
+      ISTIO_META_DNS_AUTO_ALLOCATE: "true"
+      ISTIO_META_DNS_CAPTURE: "true"
+# Required to enable multicluster support
+platforms:
+  peering:
+    enabled: true
+profile: ambient
+license:
+    value: ${GLOO_MESH_LICENSE_KEY}
+EOF
+```
+
+Install istio-cni on cluster1 and cluster2
+```bash
+helm upgrade --install istio-cni oci://${HELM_REPO}/cni \
+--namespace istio-system \
+--kube-context ${CLUSTER1} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+# Assigns IP addresses to multicluster services
+ambient:
+  dnsCapture: true
+excludeNamespaces:
+  - istio-system
+  - kube-system
+global:
+  hub: ${REPO}
+  tag: ${ISTIO_IMAGE}
+  variant: distroless
+  platform: gke
+profile: ambient
+EOF
+```
+
+```bash
+helm upgrade --install istio-cni oci://${HELM_REPO}/cni \
+--namespace istio-system \
+--kube-context ${CLUSTER2} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+# Assigns IP addresses to multicluster services
+ambient:
+  dnsCapture: true
+excludeNamespaces:
+  - istio-system
+  - kube-system
+global:
+  hub: ${REPO}
+  tag: ${ISTIO_IMAGE}
+  variant: distroless
+  platform: gke
+profile: ambient
+EOF
+```
+
+
+Install ztunnel on cluster1 and cluster2
+```bash
+helm upgrade --install ztunnel oci://${HELM_REPO}/ztunnel \
+--namespace istio-system \
+--kube-context ${CLUSTER1} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+configValidation: true
+enabled: true
+env:
+  L7_ENABLED: "true"
+  # Required when a unique trust domain is set for each cluster
+  SKIP_VALIDATE_TRUST_DOMAIN: "true"
+hub: ${REPO}
+multiCluster:
+  clusterName: cluster1
+tag: ${ISTIO_IMAGE}
+istioNamespace: istio-system
+namespace: istio-system
+network: cluster1
+profile: ambient
+proxy:
+  clusterDomain: cluster.local
+terminationGracePeriodSeconds: 29
+variant: distroless
+EOF
+```
+
+```bash
+helm upgrade --install ztunnel oci://${HELM_REPO}/ztunnel \
+--namespace istio-system \
+--kube-context ${CLUSTER2} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+configValidation: true
+enabled: true
+env:
+  L7_ENABLED: "true"
+  # Required when a unique trust domain is set for each cluster
+  SKIP_VALIDATE_TRUST_DOMAIN: "true"
+hub: ${REPO}
+multiCluster:
+  clusterName: cluster2
+tag: ${ISTIO_IMAGE}
+istioNamespace: istio-system
+namespace: istio-system
+network: cluster2
+profile: ambient
+proxy:
+  clusterDomain: cluster.local
+terminationGracePeriodSeconds: 29
+variant: distroless
+EOF
+```
+
+```bash
+kubectl label namespace istio-system --context ${CLUSTER1} topology.istio.io/network=cluster1
+kubectl label namespace istio-system --context ${CLUSTER2} topology.istio.io/network=cluster2
+```
+
 
 ### Peer the clusters together
 

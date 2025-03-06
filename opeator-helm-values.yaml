@@ -1,0 +1,89 @@
+base: |
+  global:
+    istioNamespace: istio-system
+  profile: ambient
+  revision: gloo
+cni: |
+  cni:
+    ambient:
+      dnsCapture: true
+  global:
+    istioNamespace: istio-system
+    logAsJson: true
+    variant: distroless
+  profile: ambient
+  revision: gloo
+istiod: |
+  global:
+    istioNamespace: istio-system
+    logAsJson: true
+    variant: distroless
+  meshConfig:
+    accessLogEncoding: JSON
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+      proxyMetadata:
+        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
+        ISTIO_META_DNS_CAPTURE: "true"
+      tracing:
+        custom_tags:
+          clusterID:
+            environment:
+              name: ISTIO_META_CLUSTER_ID
+        max_path_tag_length: 256
+    enableTracing: false
+    extensionProviders:
+    - envoyOtelAls:
+        port: "4317"
+        service: gloo-telemetry-collector.gloo-mesh.svc.cluster.local
+      name: envoyOtelAls
+    - envoyFileAccessLog:
+        path: /dev/stdout
+      name: envoy
+  pilot:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: istio.io/rev
+                operator: In
+                values:
+                - gloo
+            topologyKey: topology.kubernetes.io/zone
+          weight: 100
+    autoscaleEnabled: true
+    autoscaleMax: 25
+    autoscaleMin: 2
+    cpu:
+      targetAverageUtilization: 80
+    env:
+      AUTO_RELOAD_PLUGIN_CERTS: "true"
+      PILOT_ENABLE_IP_AUTOALLOCATE: "true"
+      PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
+      PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION: "true"
+      PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS: "true"
+      PILOT_SKIP_VALIDATE_TRUST_DOMAIN: "true"
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 1000m
+        memory: 1Gi
+  platforms:
+    peering:
+      enabled: true
+  profile: ambient
+  revision: gloo
+  revisionTags:
+  - default
+ztunnel: |
+  env:
+    ISTIO_META_DNS_CAPTURE: "true"
+    SKIP_VALIDATE_TRUST_DOMAIN: "true"
+  istioNamespace: istio-system
+  logAsJson: true
+  profile: ambient
+  revision: gloo
