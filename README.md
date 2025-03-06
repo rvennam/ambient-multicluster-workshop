@@ -10,8 +10,9 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 
 1. Create two clusters and set the env vars below to their context
 ```bash
-export CLUSTER1=gke_ambient_one
-export CLUSTER2=gke_ambient_two
+export CLUSTER1=gke_ambient_one # UPDATE THIS
+export CLUSTER2=gke_ambient_two # UPDATE THIS
+export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
 2. Download Solo's 1.25.0 `istioctl` Binary:
 ```bash
@@ -60,7 +61,7 @@ kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
 Install the operator
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
-  helm upgrade --install --kube-context=${context} gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator --version 0.1.0-rc.1 -n gloo-system --create-namespace &
+  helm upgrade -i  --kube-context=${context} gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator --version 0.2.0-beta.0 -n gloo-system --create-namespace --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} &
 done
 ```
 Use the `ServiceMeshController` resource to install Istio on both clusters
