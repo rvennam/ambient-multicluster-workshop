@@ -58,6 +58,8 @@ kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
 
 ### Install Istio on both clusters using Gloo Operator
 
+To use HELM instead, see [Helm Instructions](./README_helm.md)
+
 Install the operator
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
