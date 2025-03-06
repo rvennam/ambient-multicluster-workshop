@@ -198,7 +198,7 @@ license:
 EOF
 ```
 
-Install istio-cni on cluster1 and cluster2
+Install istio-cni on cluster1 and cluster2. **FOR GKE**, uncomment the `platform: gke` line
 ```bash
 helm upgrade --install istio-cni oci://${HELM_REPO}/cni \
 --namespace istio-system \
@@ -515,6 +515,58 @@ But NOT reviews:
 ```
 kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
 ```
+
+### Block unmatched traffic
+But what about hosts that dosn't have a matching ServiceEntry. For example, if we try `jsonplaceholder.typicode.com/todos/1`, it works:
+
+```bash
+kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
+```
+
+To block this, we need [egress policies](https://ambientmesh.io/docs/traffic/mesh-egress/#policy-enforcement), which instruct ztunnel how to manage unmatched traffic.
+
+We need to update ztunnel with our policy:
+```bash
+helm upgrade --install ztunnel oci://${HELM_REPO}/ztunnel \
+--namespace istio-system \
+--kube-context ${CLUSTER1} \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+configValidation: true
+enabled: true
+env:
+  L7_ENABLED: "true"
+  # Required when a unique trust domain is set for each cluster
+  SKIP_VALIDATE_TRUST_DOMAIN: "true"
+hub: ${REPO}
+multiCluster:
+  clusterName: cluster1
+tag: ${ISTIO_IMAGE}
+istioNamespace: istio-system
+namespace: istio-system
+network: cluster1
+profile: ambient
+proxy:
+  clusterDomain: cluster.local
+terminationGracePeriodSeconds: 29
+variant: distroless
+egressPolicies:
+# Allow the egress gateway to send anywhere, so we do not loop
+- namespaces: [istio-egress]
+  policy: Passthrough
+# For anything else, forward to our egress gateway
+- gateway: egress-gateway.istio-egress.svc.cluster.local
+  policy: Gateway
+  matchCidrs:
+  - 0.0.0.0/0
+  - ::/0
+EOF
+```
+Let's try again:
+```bash
+kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
+```
+You should see something similar to: `command terminated with exit code 56`
 
 ## Gloo Management Plane
 
