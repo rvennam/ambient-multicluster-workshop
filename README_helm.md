@@ -95,6 +95,7 @@ EOF
 done
 ```
 
+Install Istio CRD's on cluster1 and cluster2:
 
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
@@ -111,7 +112,7 @@ done
 
 Apply the CRDs for the Kubernetes Gateway API to your cluster, which are required to create components such as waypoint proxies for L7 traffic policies, gateways with the Gateway resource, and more.
 
-```
+```bash
 kubectl --context $CLUSTER1 apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 kubectl --context $CLUSTER2 apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 ```
