@@ -63,7 +63,10 @@ To use HELM instead, see [Helm Instructions](./README_helm.md)
 Install the operator
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
-  helm upgrade -i  --kube-context=${context} gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator --version 0.2.0-beta.0 -n gloo-system --create-namespace --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} &
+  helm upgrade -i --kube-context=${context} gloo-operator \
+    oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
+    --version 0.2.0-beta.0 -n gloo-system --create-namespace \
+    --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} &
 done
 ```
 Use the `ServiceMeshController` resource to install Istio on both clusters
