@@ -15,19 +15,19 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.25.0
+export ISTIO_VERSION=1.25.1
 export REPO_KEY=e038d180f90a
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
 ```
-2. Download Solo's 1.25.0 `istioctl` Binary:
+2. Download Solo's 1.25.1 `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/1.25.0-solo/istioctl-1.25.0-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -555,9 +555,8 @@ egressPolicies:
 # Allow the egress gateway to send anywhere, so we do not loop
 - namespaces: [istio-egress]
   policy: Passthrough
-# For anything else, forward to our egress gateway
-- gateway: egress-gateway.istio-egress.svc.cluster.local
-  policy: Gateway
+# For anything else (that doesn't have a SE), Deny
+- policy: Deny
   matchCidrs:
   - 0.0.0.0/0
   - ::/0
@@ -585,8 +584,8 @@ Cluster1 will act as the management cluster and workload cluster:
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.0
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.0 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
