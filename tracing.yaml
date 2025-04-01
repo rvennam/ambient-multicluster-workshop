@@ -1,0 +1,32 @@
+# Gloo Operator will automatically apply this configuration extension
+# Port forward to operator pod to localhost:6060/debug/istio/values
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gloo-extensions-config
+  namespace: gloo-system
+data:
+  beta: |
+    serviceMeshController:
+      meshConfig:
+        extensionProviders:
+        - name: jaeger-tracing
+          opentelemetry:
+            port: 4317
+            service: jaeger-collector.istio-system.svc.cluster.local
+      ztunnel:
+        telemetry:
+          layer7:
+            tracing: 
+              otlpEndpoint: "http://jaeger-collector.istio-system.svc.cluster.local:4317"
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: "jaeger-tracing"
+    randomSamplingPercentage: 100
