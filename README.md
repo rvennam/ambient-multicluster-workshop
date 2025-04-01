@@ -129,6 +129,7 @@ done
 Apply the following Kubernetes Gateway API resources to cluster1 to expose productpage service using an Istio gateway:
 
 ```yaml
+kubectl --context=${CLUSTER1} apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -177,7 +178,7 @@ spec:
       group: networking.istio.io
       name: productpage.bookinfo.mesh.internal
       port: 9080
-
+EOF
 ```
 
 Wait until a LB IP gets assigned to bookinfo-gateway-istio svc and then visit the app!
