@@ -1,0 +1,48 @@
+# apiVersion: networking.istio.io/v1
+# kind: ServiceEntry
+# metadata:
+#   labels:
+#     istio.io/use-waypoint: egress-gateway
+#     istio.io/use-waypoint-namespace: istio-egress
+#   name: jsonplaceholder.org
+#   namespace: istio-egress
+# spec:
+#   hosts:
+#   - jsonplaceholder.typicode.com
+#   ports:
+#   - number: 80
+#     name: http
+#     protocol: HTTP
+#     targetPort: 443
+#   resolution: DNS
+
+
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-svc-https
+  namespace: istio-egress
+spec:
+  hosts:
+  - www.google.com
+  ports:
+  - number: 443
+    name: https
+    protocol: TLS
+  resolution: DNS
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: reviews-to-httpbin
+  namespace: istio-egress
+spec:
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/bookinfo/sa/bookinfo-reviews"]
+  targetRefs:
+    - group: networking.istio.io
+      kind: ServiceEntry
+      name: external-svc-https

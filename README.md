@@ -50,8 +50,8 @@ function create_cacerts_secret() {
   context=${1:?context}
   cluster=${2:?cluster}
   make -f ../tools/certs/Makefile.selfsigned.mk ${cluster}-cacerts
-  kubectl --context=${context} create ns cnp-istio || true
-  kubectl --context=${context} create secret generic cacerts -n cnp-istio \
+  kubectl --context=${context} create ns istio-system || true
+  kubectl --context=${context} create secret generic cacerts -n istio-system \
     --from-file=${cluster}/ca-cert.pem \
     --from-file=${cluster}/ca-key.pem \
     --from-file=${cluster}/root-cert.pem \
