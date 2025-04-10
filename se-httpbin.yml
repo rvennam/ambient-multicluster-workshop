@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: httpbin.org
+  namespace: bookinfo
+spec:
+  hosts:
+  - solo.io
+  ports:
+  - number: 80
+    name: http
+    protocol: TCP
+  resolution: DNS
