@@ -165,10 +165,78 @@ spec:
 
 
 Link clusters together:
+
+Option 1: istioctl
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 ```
 
+Option 2: yaml
+```bash
+export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+
+echo "Cluster 1 east-west gateway: $CLUSTER1_EW_ADDRESS"
+echo "Cluster 2 east-west gateway: $CLUSTER2_EW_ADDRESS"
+
+kubectl apply --context $CLUSTER1 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    gateway.istio.io/service-account: istio-eastwest
+    gateway.istio.io/trust-domain: cluster2
+  labels:
+    topology.istio.io/network: cluster2
+  name: istio-remote-peer-cluster2
+  namespace: cnp-istio
+spec:
+  addresses:
+  - type: IPAddress
+    value: $CLUSTER2_EW_ADDRESS
+  gatewayClassName: istio-remote
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+
+kubectl apply --context $CLUSTER2 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    gateway.istio.io/service-account: istio-eastwest
+    gateway.istio.io/trust-domain: cluster1
+  labels:
+    topology.istio.io/network: cluster1
+  name: istio-remote-peer-cluster1
+  namespace: cnp-istio
+spec:
+  addresses:
+  - type: IPAddress
+    value: $CLUSTER1_EW_ADDRESS
+  gatewayClassName: istio-remote
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+```
 
 ### Enable Istio for bookinfo Namespace
 
