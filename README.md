@@ -108,9 +108,62 @@ Expose using an east-west gateway:
 ```bash
 kubectl create ns istio-gateways --context ${CLUSTER1}
 kubectl create ns istio-gateways --context ${CLUSTER2}
+```
+
+Option 1: istioctl
+```
 istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
+Option 2: yaml
+```
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/expose-istiod: "15012"
+    topology.istio.io/network: cluster1
+  name: istio-eastwest
+  namespace: istio-gateways
+spec:
+  gatewayClassName: istio-eastwest
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+```
+```
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/expose-istiod: "15012"
+    topology.istio.io/network: cluster2
+  name: istio-eastwest
+  namespace: istio-gateways
+spec:
+  gatewayClassName: istio-eastwest
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+```
+
+
 Link clusters together:
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
