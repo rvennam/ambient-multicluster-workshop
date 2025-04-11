@@ -106,6 +106,8 @@ EOF
 
 Expose using an east-west gateway:
 ```bash
+kubectl create ns istio-gateways --context ${CLUSTER1}
+kubectl create ns istio-gateways --context ${CLUSTER2}
 istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
