@@ -574,7 +574,7 @@ Optionally, you can deploy the Gloo Management Plane that provides many benefits
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.0 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.1 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
@@ -589,7 +589,7 @@ helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
-Then, you need to set the environment variable to tell the Gloo Mesh agents in the workload clusters how to communicate with the management plane:
+Then, you need to set the environment variables with the management plane addresses. These variables will be used to configure the Gloo Mesh agents in cluster2:
 
 ```bash
 export ENDPOINT_GLOO_MESH=$(kubectl --context ${CLUSTER1} -n gloo-mesh get svc gloo-mesh-mgmt-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}'):9900
@@ -603,11 +603,7 @@ echo $HOST_GLOO_MESH
 echo $ENDPOINT_GLOO_MESH
 ```
 
-
-
-Then, register cluster2 as a workload cluster to cluster1
-
-Tell mgmt plane that cluster2 will connect to it
+Tell the management plane that cluster2 will connect to it
 ```bash
 kubectl apply --context ${CLUSTER1} -f - <<EOF
 apiVersion: admin.gloo.solo.io/v2
@@ -620,6 +616,7 @@ spec:
 EOF
 ```
 
+Copy the root and token over to cluster2. This will be used by the agent to perform mtls connection while connecting to the mgmt plane.
 ```bash
 kubectl --context ${CLUSTER2} create ns gloo-mesh
 
@@ -632,6 +629,7 @@ kubectl create secret generic relay-identity-token-secret -n gloo-mesh --context
 rm token
 ```
 
+Deploy the agent in cluster2
 ```bash
 helm upgrade --install gloo-platform-crds gloo-platform-crds \
   --repo https://storage.googleapis.com/gloo-platform/helm-charts \
@@ -666,6 +664,8 @@ EOF
 
 Launch the UI:
 ```
-meshctl dashboard
+kubectl -n gloo-mesh port-forward deployment/gloo-mesh-ui 8090
 ```
+
+localhost:8090:
 ![Gloo Mesh UI](gloo-mesh-ui.png)
