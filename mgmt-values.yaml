@@ -29,4 +29,4 @@ telemetryGateway:
   enabled: true
 installEnterpriseCrds: false
 featureGates:
-  ConfigDistribution: true
+  ConfigDistribution: false
