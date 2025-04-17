@@ -572,20 +572,13 @@ You should see something similar to: `command terminated with exit code 56`
 
 Optionally, you can deploy the Gloo Management Plane that provides many benefits and features. For this lab, we'll just focus on the UI and the service graph. 
 
-Start by downloading the meshctl cli
-```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.1 sh -
-export PATH=$HOME/.gloo-mesh/bin:$PATH
-```
-
-
 Cluster1 will act as the management cluster and workload cluster:
 ```bash
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --values mgmt-values.yaml \
+helm upgrade --kube-context ${CLUSTER1} -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1
+helm upgrade --kube-context ${CLUSTER1} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
