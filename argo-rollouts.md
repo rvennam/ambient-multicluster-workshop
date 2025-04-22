@@ -219,9 +219,3 @@ Promote the canary. As we defined in the Rollout, traffic will jump to 40%, 60%,
 kubectl argo rollouts promote rollouts-demo -n bookinfo
 ```
 ![alt text](image-3.png)
-
-Abort the rollout and traffic will revert back to the stable:
-```
-kubectl argo rollouts abort rollouts-demo -n bookinfo
-```
-![alt text](image-4.png)
