@@ -1,7 +1,9 @@
-# Pre-req
+# Istio and Argo Rollouts
+
+## Pre-req
 - Perform the steps in the ./README.md to install Istio and bookinfo samples
 
-# Install Argo Rollouts
+## Install Argo Rollouts
 
 Controller Installation:
 ```
@@ -42,6 +44,12 @@ rules:
       - get
       - patch
       - update
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -57,9 +65,7 @@ subjects:
     name: argo-rollouts
 ```
 
-Finally, edit the `argo-rollouts` ClusterRole and add `create` permissions for `configmaps`
-
-# Deploy Sample Application
+## Deploy Sample Application
 
 ```yaml
 apiVersion: v1
@@ -138,7 +144,7 @@ spec:
 
 ```
 
-Set Route to the sample application
+Create HTTPRoute for the sample application. This binds to the bookinfo gateway we created in the other workshop
 
 ```yaml
 kind: HTTPRoute
@@ -166,7 +172,7 @@ spec:
 Visit the app:
 ![alt text](image.png)
 
-
+See status:
 ```sh
 $ kubectl argo rollouts get rollout rollouts-demo -n bookinfo
 Name:            rollouts-demo
@@ -201,7 +207,9 @@ NAME                                       KIND        STATUS        AGE    INFO
 
 Step 1: Update the image to the yellow version
 
+```
 kubectl argo rollouts set image -n bookinfo rollouts-demo rollouts-demo=argoproj/rollouts-demo:yellow
+```
 
 As you can see, 20% of the responses are now yellow and it will wait here until a manual promotion.
 ![alt text](image-1.png)
