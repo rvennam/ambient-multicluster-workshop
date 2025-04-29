@@ -3,6 +3,10 @@
 ## Pre-req
 - Perform the steps in the ./README.md to install Istio and bookinfo samples
 
+DELETE the bookinfo HTTPRoute as it will conflict with the HTTPRoute we will create in this lab
+```
+kubectl delete HTTPRoute -n bookinfo bookinfo
+```
 ## Install Argo Rollouts
 
 Controller Installation:
@@ -158,8 +162,17 @@ spec:
   rules:
   - matches:
     - path:
-        type: PathPrefix
+        type: Exact
         value: /
+    - path:
+        type: Exact
+        value: /color
+    - path:
+        type: Exact
+        value: /main.js
+    - path:
+        type: Exact
+        value: /style.css
     backendRefs:
     - name: argo-rollouts-stable-service
       kind: Service
