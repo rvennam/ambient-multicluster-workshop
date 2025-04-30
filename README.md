@@ -40,7 +40,7 @@ done
 ### Configure Trust - Issue Intermediate Certs
 
 ```bash
-curl -L https://istio.io/downloadIstio | sh -
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.25.1 sh -
 cd istio-1.25.1
 mkdir -p certs
 pushd certs
@@ -450,7 +450,7 @@ export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
 
-Cluster1 will act as the management cluster and workload cluster:
+Cluster1 will act as the management cluster and workload cluster: (note: mgmt-values.yaml can be found in this repo)
 ```bash
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
