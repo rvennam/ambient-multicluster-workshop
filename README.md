@@ -450,7 +450,7 @@ export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
 
-Cluster1 will act as the management cluster and workload cluster: (note: mgmt-values.yaml can be found in this repo)
+Cluster1 will act as the management cluster and workload cluster: (see [mgmt-values.yaml](./mgmt-values.yaml) for reference)
 ```bash
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
