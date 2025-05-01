@@ -445,7 +445,7 @@ Optionally, you can deploy the Gloo Management Plane that provides many benefits
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.1 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.2 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
