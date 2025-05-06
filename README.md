@@ -439,6 +439,58 @@ But NOT reviews:
 kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
 ```
 
+### Bring VMs into the Mesh
+
+Gloo Mesh allows you to extend the mesh to include workloads running on virtual machines (VMs). This enables seamless communication between services running on VM and those running on Kubernetes, providing a unified service mesh.
+
+#### Step 1: Generate the Bootstrap Configuration
+
+To bring a VM into the mesh, you need to generate a bootstrap configuration. This configuration includes the necessary certificates and metadata for the VM to join the mesh.
+
+Run the following command to generate the bootstrap configuration for the VM:
+
+```bash
+istioctl bootstrap --namespace vm1 --service-account vm1
+```
+
+This command creates a bootstrap token that will be used by the VM to authenticate with the mesh.
+
+#### Step 2: Set the Bootstrap Token
+
+Extract the token generated in the previous step and set it as an environment variable:
+
+```bash
+export BOOTSTRAP_TOKEN=<set from previous command>
+```
+
+Replace `<set from previous command>` with the actual token value.
+
+#### Step 3: Run ztunnel on the VM
+
+The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
+
+```bash
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} --network=host us-docker.pkg.dev/gloo-mesh/istio-e038d180f90a/ztunnel:1.25.1-solo-distroless
+```
+
+This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
+
+#### Step 4: Test Connectivity from the VM to the Mesh
+
+Once the ztunnel is running, you can test connectivity from the VM to services in the mesh. Use the following commands to verify that the VM can communicate with the `productpage` service in the `bookinfo` namespace:
+
+```bash
+export ALL_PROXY=socks5h://127.0.0.1:15080
+curl productpage.bookinfo:9080
+curl productpage.bookinfo.mesh.internal:9080
+```
+
+- The first `curl` command tests connectivity using the service's Kubernetes DNS name.
+- The second `curl` command tests connectivity using the service's mesh-internal DNS name.
+
+If both commands return the expected responses, the VM has successfully joined the mesh and can communicate with other services.
+
+
 ## Gloo Management Plane
 
 Optionally, you can deploy the Gloo Management Plane that provides many benefits and features. For this lab, we'll just focus on the UI and the service graph. 
