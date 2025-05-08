@@ -27,6 +27,12 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 ```
 3. Verify using `istioctl version`
 
+4. Clone this repo and change directory
+```bash
+git clone https://github.com/rvennam/ambient-multicluster-workshop.git 
+cd ambient-multicluster-workshop
+```
+
 
 ### Deploy Bookinfo sample to both clusters
 ```bash
@@ -40,26 +46,20 @@ done
 ### Configure Trust - Issue Intermediate Certs
 
 ```bash
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.25.1 sh -
-cd istio-1.25.1
-mkdir -p certs
-pushd certs
-make -f ../tools/certs/Makefile.selfsigned.mk root-ca
-
-function create_cacerts_secret() {
-  context=${1:?context}
-  cluster=${2:?cluster}
-  make -f ../tools/certs/Makefile.selfsigned.mk ${cluster}-cacerts
+for context in ${CLUSTER1} ${CLUSTER2}; do
   kubectl --context=${context} create ns istio-system || true
-  kubectl --context=${context} create secret generic cacerts -n istio-system \
-    --from-file=${cluster}/ca-cert.pem \
-    --from-file=${cluster}/ca-key.pem \
-    --from-file=${cluster}/root-cert.pem \
-    --from-file=${cluster}/cert-chain.pem
-}
-
-create_cacerts_secret ${CLUSTER1} cluster1
-create_cacerts_secret ${CLUSTER2} cluster2
+  kubectl --context=${context} create ns istio-gateways || true
+done
+kubectl --context=${CLUSTER1} create secret generic cacerts -n istio-system \
+--from-file=./certs/cluster1/ca-cert.pem \
+--from-file=./certs/cluster1/ca-key.pem \
+--from-file=./certs/cluster1/root-cert.pem \
+--from-file=./certs/cluster1/cert-chain.pem
+kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
+--from-file=./certs/cluster2/ca-cert.pem \
+--from-file=./certs/cluster2/ca-key.pem \
+--from-file=./certs/cluster2/root-cert.pem \
+--from-file=./certs/cluster2/cert-chain.pem
 ```
 
 ### Install Istio on both clusters using Gloo Operator
@@ -105,10 +105,6 @@ EOF
 ### Peer the clusters together
 
 Expose using an east-west gateway:
-```bash
-kubectl create ns istio-gateways --context ${CLUSTER1}
-kubectl create ns istio-gateways --context ${CLUSTER2}
-```
 
 Option 1: istioctl
 ```
@@ -116,7 +112,8 @@ istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
 Option 2: yaml
-```
+```bash
+kubectl apply --context $CLUSTER1 -f- <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -138,8 +135,10 @@ spec:
     protocol: TLS
     tls:
       mode: Passthrough
+EOF
 ```
-```
+```bash
+kubectl apply --context $CLUSTER2 -f- <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -161,6 +160,7 @@ spec:
     protocol: TLS
     tls:
       mode: Passthrough
+EOF
 ```
 
 
@@ -173,8 +173,8 @@ istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 
 Option 2: yaml
 ```bash
-export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
-export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
 
 echo "Cluster 1 east-west gateway: $CLUSTER1_EW_ADDRESS"
 echo "Cluster 2 east-west gateway: $CLUSTER2_EW_ADDRESS"
@@ -189,7 +189,7 @@ metadata:
   labels:
     topology.istio.io/network: cluster2
   name: istio-remote-peer-cluster2
-  namespace: cnp-istio
+  namespace: istio-gateways
 spec:
   addresses:
   - type: IPAddress
@@ -218,7 +218,7 @@ metadata:
   labels:
     topology.istio.io/network: cluster1
   name: istio-remote-peer-cluster1
-  namespace: cnp-istio
+  namespace: istio-gateways
 spec:
   addresses:
   - type: IPAddress
