@@ -112,7 +112,7 @@ istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
 Option 2: yaml
-```
+```bash
 kubectl apply --context $CLUSTER1 -f- <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -137,7 +137,7 @@ spec:
       mode: Passthrough
 EOF
 ```
-```
+```bash
 kubectl apply --context $CLUSTER2 -f- <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
