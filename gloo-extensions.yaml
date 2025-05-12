@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gloo-extensions-config
+  namespace: gloo-system
+data:
+  values.istio-ztunnel: |
+    l7Telemetry:
+      distributedTracing:
+        # Can disable the distributed tracing
+        enabled: true
+        # OTLP endpoint to send spans to
+        otlpEndpoint: "http://gloo-telemetry-collector.gloo-mesh:4317"
+  values.istiod: |
+    env:
+      REQUIRE_3P_TOKEN: false
+    meshConfig:
+      # Enable tracing
+      enableTracing: true
+      # Specify tracing settings
+      defaultConfig:
+        tracing:
+          sampling: 100
+          zipkin:
+            address: gloo-telemetry-collector.gloo-mesh.svc.cluster.local:9411
