@@ -27,12 +27,6 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 ```
 3. Verify using `istioctl version`
 
-4. Clone this repo and change directory
-```bash
-git clone https://github.com/rvennam/ambient-multicluster-workshop.git 
-cd ambient-multicluster-workshop
-```
-
 
 ### Deploy Bookinfo sample to both clusters
 ```bash
@@ -46,20 +40,26 @@ done
 ### Configure Trust - Issue Intermediate Certs
 
 ```bash
-for context in ${CLUSTER1} ${CLUSTER2}; do
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.25.1 sh -
+cd istio-1.25.1
+mkdir -p certs
+pushd certs
+make -f ../tools/certs/Makefile.selfsigned.mk root-ca
+
+function create_cacerts_secret() {
+  context=${1:?context}
+  cluster=${2:?cluster}
+  make -f ../tools/certs/Makefile.selfsigned.mk ${cluster}-cacerts
   kubectl --context=${context} create ns istio-system || true
-  kubectl --context=${context} create ns istio-gateways || true
-done
-kubectl --context=${CLUSTER1} create secret generic cacerts -n istio-system \
---from-file=./certs/cluster1/ca-cert.pem \
---from-file=./certs/cluster1/ca-key.pem \
---from-file=./certs/cluster1/root-cert.pem \
---from-file=./certs/cluster1/cert-chain.pem
-kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
---from-file=./certs/cluster2/ca-cert.pem \
---from-file=./certs/cluster2/ca-key.pem \
---from-file=./certs/cluster2/root-cert.pem \
---from-file=./certs/cluster2/cert-chain.pem
+  kubectl --context=${context} create secret generic cacerts -n istio-system \
+    --from-file=${cluster}/ca-cert.pem \
+    --from-file=${cluster}/ca-key.pem \
+    --from-file=${cluster}/root-cert.pem \
+    --from-file=${cluster}/cert-chain.pem
+}
+
+create_cacerts_secret ${CLUSTER1} cluster1
+create_cacerts_secret ${CLUSTER2} cluster2
 ```
 
 ### Install Istio on both clusters using Gloo Operator
@@ -105,6 +105,10 @@ EOF
 ### Peer the clusters together
 
 Expose using an east-west gateway:
+```bash
+kubectl create ns istio-gateways --context ${CLUSTER1}
+kubectl create ns istio-gateways --context ${CLUSTER2}
+```
 
 Option 1: istioctl
 ```
@@ -112,8 +116,7 @@ istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
 Option 2: yaml
-```bash
-kubectl apply --context $CLUSTER1 -f- <<EOF
+```
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -135,10 +138,8 @@ spec:
     protocol: TLS
     tls:
       mode: Passthrough
-EOF
 ```
-```bash
-kubectl apply --context $CLUSTER2 -f- <<EOF
+```
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -160,7 +161,6 @@ spec:
     protocol: TLS
     tls:
       mode: Passthrough
-EOF
 ```
 
 
@@ -173,8 +173,8 @@ istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 
 Option 2: yaml
 ```bash
-export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
-export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
 
 echo "Cluster 1 east-west gateway: $CLUSTER1_EW_ADDRESS"
 echo "Cluster 2 east-west gateway: $CLUSTER2_EW_ADDRESS"
@@ -189,7 +189,7 @@ metadata:
   labels:
     topology.istio.io/network: cluster2
   name: istio-remote-peer-cluster2
-  namespace: istio-gateways
+  namespace: cnp-istio
 spec:
   addresses:
   - type: IPAddress
@@ -218,7 +218,7 @@ metadata:
   labels:
     topology.istio.io/network: cluster1
   name: istio-remote-peer-cluster1
-  namespace: istio-gateways
+  namespace: cnp-istio
 spec:
   addresses:
   - type: IPAddress
@@ -319,7 +319,58 @@ curl $(kubectl get svc -n bookinfo bookinfo-gateway-istio --context $CLUSTER1 -o
 Voila! This should be round robinning between productpage on both clusters.
 
 
-### Istio Waypoints for L7 Functionality
+### Automatic and Manual Failover
+
+**productpage-v1 failover**
+Scale down productpage on cluster1 to simulate a failure:
+```bash
+kubectl scale deploy productpage-v1 --replicas=0 --context $CLUSTER1
+```
+Visit the application in your browser and you'll see traffic is not impacted because we're failing over to cluster2 automatically.
+
+Revert the changes:
+```bash
+kubectl scale deploy productpage-v1 --replicas=1 --context $CLUSTER1
+```
+**details-v1 failover**
+We can also scale down other services. Lets enable `details` to be multi-cluster and scale it down
+```bash
+kubectl --context ${context}  -n bookinfo label service details solo.io/service-scope=global-only --context $CLUSTER1
+kubectl --context ${context}  -n bookinfo label service details solo.io/service-scope=global-only --context $CLUSTER2
+```
+```bash
+kubectl scale deploy details-v1 --replicas=0 --context $CLUSTER1
+```
+
+Visit the application in your browser and you'll see traffic is not impacted because we're failing over from productpage.cluster1 to bookinfo.cluster2 automatically.
+
+
+### Discovery and Migration of Microservices
+
+To simulate migration of microservices between clusters, lets deploy httpbin service to Cluster1 and call it from ratings.
+
+Deploy httpbin and mark it as global
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/httpbin/httpbin.yaml -n bookinfo --context $CLUSTER1
+kubectl -n bookinfo label service httpbin solo.io/service-scope=global --context $CLUSTER1
+```
+Test ratings-v1.cluster1 -> httpbin.cluster1
+```bash
+kubectl exec deploy/ratings-v1 -n bookinfo --context $CLUSTER1 -- curl httpbin.bookinfo.mesh.internal:8000/headers
+```
+Now, lets move it to cluster2
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/httpbin/httpbin.yaml -n bookinfo --context $CLUSTER2
+kubectl -n bookinfo label service httpbin solo.io/service-scope=global --context $CLUSTER2
+kubectl delete -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/httpbin/httpbin.yaml -n bookinfo --context $CLUSTER1
+```
+
+Test ratings-v1.cluster1 -> httpbin.cluster2 with the same command as before:
+```bash
+kubectl exec deploy/ratings-v1 -n bookinfo --context $CLUSTER1 -- curl httpbin.bookinfo.mesh.internal:8000/headers
+```
+
+### Intelligent Traffic Distribution
 
 Istio Waypoints enable Layer 7 traffic management in an Ambient Mesh, providing advanced capabilities like routing, authorization, observability, and security policies. Acting as dedicated traffic proxies, Waypoints handle HTTP, gRPC, and other application-layer protocols, seamlessly integrating with Istio’s security model to enforce fine-grained traffic control.
 
@@ -336,168 +387,34 @@ for context in ${CLUSTER1} ${CLUSTER2}; do
 done
 ```
 
-# Egress Gateway
+### Gradual Migration to Istio Ambient Mesh
 
-In addition to managing traffic coming into the mesh and within the mesh, ambient mesh can also manage traffic leaving the mesh. This includes observing the traffic and enforcing policies against it.
-
-Just as a waypoint can be used for traffic addressed to a service inside your cluster, a gateway can be used for traffic that leaves your cluster.
-
-In Istio, you can direct traffic to this gateway on a host-by-host basis using the ServiceEntry resource, which is bound to a waypoint used for egress control.
-
-This section will only use $CLUSTER1.
-
-First, we'll deploy an egress gateway in the `istio-egress` namespace, and call it `egress-gateway`
-
+Create a ns called legacy which will have sidecar based services. Deploy sleep and httpbin sample apps to it
 ```bash
-kubectl create namespace istio-egress
-kubectl apply -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: egress-gateway
-  namespace: istio-egress
-spec:
-  gatewayClassName: istio-waypoint
-  listeners:
-  - name: mesh
-    port: 15008
-    protocol: HBONE
-    allowedRoutes:
-      namespaces:
-        from: All
-EOF
+kubectl create ns legacy --context $CLUSTER1
+kubectl label ns legacy istio-injection=enabled --context $CLUSTER1
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/sleep/sleep.yaml -n legacy  --context $CLUSTER1
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/httpbin/httpbin.yaml -n legacy --context $CLUSTER1
+```
+**Sidecar to Ambient**
+From sleep, call local and global ambient services
+```
+kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo.mesh.internal:9080  --context $CLUSTER1
+kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo:9080  --context $CLUSTER1
+```
+**Ambient to Sidecar**
+From ratings.bookinfo, call httpbin
+```
+kubectl exec deploy/ratings-v1 -n bookinfo -- curl httpbin.legacy:8000  --context $CLUSTER1
 ```
 
-If you plan on creating SE's in the istio-egress namespace, you can label just the ns and not need to label every SE:
-```
-kubectl label ns istio-egress istio.io/use-waypoint=egress-gateway
-```
-
-Define httpbin.org on port 40 and 443 as external hosts using ServiceEntries in the `bookinfo` namespace. Notice that we're labeling the ServiceEntry to use the egress gateway
-
-```yaml
-kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: httpbin.org
-  namespace: bookinfo
-  labels:
-    istio.io/use-waypoint: egress-gateway
-    istio.io/use-waypoint-namespace: istio-egress
-spec:
-  hosts:
-  - httpbin.org
-  ports:
-  - number: 80
-    name: http
-    protocol: HTTP
-    targetPort: 443
-  resolution: DNS
----
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: httpbin.org-tls
-  namespace: bookinfo
-spec:
-  host: httpbin.org
-  trafficPolicy:
-    tls:
-      mode: SIMPLE
-EOF
-```
-
-Only allow ratings to call httpbin.org
-```yaml
-kubectl apply -f - <<EOF
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ratings-to-httpbin
-  namespace: bookinfo
-spec:
-  targetRefs:
-  - kind: ServiceEntry
-    group: networking.istio.io
-    name: httpbin.org
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/bookinfo/sa/bookinfo-ratings"]
-EOF
-```
-
-You should now be able to call httpbin.org from ratings:
-```bash
-kubectl exec -it $(kubectl get pod -l app=ratings -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
-```
-
-But NOT reviews:
-```
-kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
-```
-
-### Bring VMs into the Mesh
-
-Gloo Mesh allows you to extend the mesh to include workloads running on virtual machines (VMs). This enables seamless communication between services running on VM and those running on Kubernetes, providing a unified service mesh.
-
-#### Step 1: Generate the Bootstrap Configuration
-
-To bring a VM into the mesh, you need to generate a bootstrap configuration. This configuration includes the necessary certificates and metadata for the VM to join the mesh.
-
-Run the following command to generate the bootstrap configuration for the VM:
-
-```bash
-istioctl bootstrap --namespace vm1 --service-account vm1
-```
-
-This command creates a bootstrap token that will be used by the VM to authenticate with the mesh.
-
-#### Step 2: Set the Bootstrap Token
-
-Extract the token generated in the previous step and set it as an environment variable:
-
-```bash
-export BOOTSTRAP_TOKEN=<set from previous command>
-```
-
-Replace `<set from previous command>` with the actual token value.
-
-#### Step 3: Run ztunnel on the VM
-
-The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
-
-```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} --network=host us-docker.pkg.dev/gloo-mesh/istio-e038d180f90a/ztunnel:1.25.1-solo-distroless
-```
-
-This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
-
-#### Step 4: Test Connectivity from the VM to the Mesh
-
-Once the ztunnel is running, you can test connectivity from the VM to services in the mesh. Use the following commands to verify that the VM can communicate with the `productpage` service in the `bookinfo` namespace:
-
-```bash
-export ALL_PROXY=socks5h://127.0.0.1:15080
-curl productpage.bookinfo:9080
-curl productpage.bookinfo.mesh.internal:9080
-```
-
-- The first `curl` command tests connectivity using the service's Kubernetes DNS name.
-- The second `curl` command tests connectivity using the service's mesh-internal DNS name.
-
-If both commands return the expected responses, the VM has successfully joined the mesh and can communicate with other services.
-
-
-## Gloo Management Plane
+### Centralized Multicluster Management
 
 Optionally, you can deploy the Gloo Management Plane that provides many benefits and features. For this lab, we'll just focus on the UI and the service graph. 
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.2 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.8.0 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
@@ -507,8 +424,8 @@ Cluster1 will act as the management cluster and workload cluster: (see [mgmt-val
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1 --kube-context=$CLUSTER1
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.8.0 --kube-context=$CLUSTER1
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.8.0 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
