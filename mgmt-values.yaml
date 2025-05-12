@@ -16,17 +16,26 @@ glooInsightsEngine:
   enabled: true
 glooUi:
   enabled: true
+  # serviceType: LoadBalancer
 prometheus:
   enabled: true
 redis:
   deployment:
     enabled: true
+# jaeger:
+#   enabled: true
 telemetryCollector:
   enabled: true
-  mode: deployment
-  replicaCount: 1
 telemetryGateway:
   enabled: true
+telemetryGatewayCustomization:
+  pipelines:
+    traces/jaeger:
+      enabled: true
+telemetryCollectorCustomization:
+  pipelines:
+    traces/istio:
+      enabled: true
 installEnterpriseCrds: false
 featureGates:
   ConfigDistribution: false
