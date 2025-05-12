@@ -110,12 +110,13 @@ kubectl create ns istio-gateways --context ${CLUSTER1}
 kubectl create ns istio-gateways --context ${CLUSTER2}
 ```
 
-Option 1: istioctl
 ```
 istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
 ```
-Option 2: yaml
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
 ```
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -162,16 +163,19 @@ spec:
     tls:
       mode: Passthrough
 ```
+</details>
 
 
-Link clusters together:
+**Link clusters together:**
 
-Option 1: istioctl
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 ```
 
-Option 2: yaml
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
+
 ```bash
 export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
 export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n cnp-istio istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
@@ -237,6 +241,7 @@ spec:
       mode: Passthrough
 EOF
 ```
+</details>
 
 ### Enable Istio for bookinfo Namespace
 
