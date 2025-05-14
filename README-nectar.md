@@ -243,6 +243,8 @@ EOF
 ```
 </details>
 
+Istio multi-cluster is installed and ready to go!
+
 ### Enable Istio for bookinfo Namespace
 
 ```bash
@@ -340,8 +342,8 @@ kubectl scale deploy productpage-v1 --replicas=1 --context $CLUSTER1
 **details-v1 failover**
 We can also scale down other services. Lets enable `details` to be multi-cluster and scale it down
 ```bash
-kubectl --context ${context}  -n bookinfo label service details solo.io/service-scope=global-only --context $CLUSTER1
-kubectl --context ${context}  -n bookinfo label service details solo.io/service-scope=global-only --context $CLUSTER2
+kubectl --context $CLUSTER1 -n bookinfo label service details solo.io/service-scope=global-only 
+kubectl --context $CLUSTER2  -n bookinfo label service details solo.io/service-scope=global-only 
 ```
 ```bash
 kubectl scale deploy details-v1 --replicas=0 --context $CLUSTER1
@@ -404,13 +406,13 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master
 **Sidecar to Ambient**
 From sleep, call local and global ambient services
 ```
-kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo.mesh.internal:9080  --context $CLUSTER1
-kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo:9080  --context $CLUSTER1
+kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo.mesh.internal:9080
+kubectl exec deploy/sleep -n legacy -- curl productpage.bookinfo:9080
 ```
 **Ambient to Sidecar**
 From ratings.bookinfo, call httpbin
 ```
-kubectl exec deploy/ratings-v1 -n bookinfo -- curl httpbin.legacy:8000  --context $CLUSTER1
+kubectl exec deploy/ratings-v1 -n bookinfo -- curl httpbin.legacy:8000
 ```
 
 ### Centralized Multicluster Management
