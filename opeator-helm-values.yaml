@@ -4,9 +4,19 @@ base: |
   profile: ambient
   revision: gloo
 cni: |
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: eks.amazonaws.com/compute-type
+            operator: NotIn
+            values:
+            - fargate
   cni:
     ambient:
       dnsCapture: true
+    cniBinDir: /home/kubernetes/bin
   global:
     istioNamespace: istio-system
     logAsJson: true
@@ -14,16 +24,27 @@ cni: |
   profile: ambient
   revision: gloo
 istiod: |
+  env:
+    REQUIRE_3P_TOKEN: false
+    extensionProviders:
+    - envoyOtelAls:
+        port: "4317"
+        service: gloo-telemetry-collector-testing.gloo-mesh.svc.cluster.local
   global:
     istioNamespace: istio-system
     logAsJson: true
+    meshID: cluster1
+    multiCluster:
+      clusterName: cluster1
+    network: cluster1
     variant: distroless
+  license:
+    value: eyJleHAiOjI0OTAzODM0NjYsImlhdCI6MTYyNjQ2OTg2NiwiayI6IlpuelRaUSIsImx0IjoiZW50IiwicHJvZHVjdCI6Imdsb28tbWVzaC1nYXRld2F5In0.aXJ1H9FG3gub5gGYI1XAXECpzbzVfxVWA5L9C4WLKNE
   meshConfig:
     accessLogEncoding: JSON
     defaultConfig:
       holdApplicationUntilProxyStarts: true
       proxyMetadata:
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
         ISTIO_META_DNS_CAPTURE: "true"
       tracing:
         custom_tags:
@@ -40,6 +61,7 @@ istiod: |
     - envoyFileAccessLog:
         path: /dev/stdout
       name: envoy
+    trustDomain: cluster1
   pilot:
     affinity:
       podAntiAffinity:
@@ -61,7 +83,6 @@ istiod: |
     env:
       AUTO_RELOAD_PLUGIN_CERTS: "true"
       PILOT_ENABLE_IP_AUTOALLOCATE: "true"
-      PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
       PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION: "true"
       PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS: "true"
       PILOT_SKIP_VALIDATE_TRUST_DOMAIN: "true"
@@ -80,10 +101,22 @@ istiod: |
   revisionTags:
   - default
 ztunnel: |
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: eks.amazonaws.com/compute-type
+            operator: NotIn
+            values:
+            - fargate
   env:
     ISTIO_META_DNS_CAPTURE: "true"
     SKIP_VALIDATE_TRUST_DOMAIN: "true"
   istioNamespace: istio-system
   logAsJson: true
+  multiCluster:
+    clusterName: cluster1
+  network: cluster1
   profile: ambient
   revision: gloo
