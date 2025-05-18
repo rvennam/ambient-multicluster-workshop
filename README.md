@@ -14,13 +14,13 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
-2. Download Solo's 1.25.0 `istioctl` Binary:
+2. Download Solo's 1.25.3 `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/1.25.0-solo/istioctl-1.25.0-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/1.25.3-solo/istioctl-1.25.3-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -85,7 +85,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.25.1
+  version: 1.25.3
   cluster: cluster1
   network: cluster1
 EOF
@@ -96,7 +96,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.25.1
+  version: 1.25.3
   cluster: cluster2
   network: cluster2
 EOF
@@ -106,12 +106,14 @@ EOF
 
 Expose using an east-west gateway:
 
-Option 1: istioctl
 ```
-istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
-istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
+istioctl --context=${CLUSTER1} multicluster expose -n istio-gateways
+istioctl --context=${CLUSTER2} multicluster expose -n istio-gateways
 ```
-Option 2: yaml
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
+
 ```bash
 kubectl apply --context $CLUSTER1 -f- <<EOF
 apiVersion: gateway.networking.k8s.io/v1
@@ -162,16 +164,18 @@ spec:
       mode: Passthrough
 EOF
 ```
-
+</details>
 
 Link clusters together:
 
-Option 1: istioctl
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 ```
 
-Option 2: yaml
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
+
 ```bash
 export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
 export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
@@ -237,6 +241,7 @@ spec:
       mode: Passthrough
 EOF
 ```
+</details>
 
 ### Enable Istio for bookinfo Namespace
 
@@ -250,7 +255,7 @@ Enable productpage to be multi-cluster on both clusters
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
   kubectl --context ${context}  -n bookinfo label service productpage solo.io/service-scope=global
-  kubectl --context ${context}  -n bookinfo annotate service productpage  networking.istio.io/traffic-distribution=Any
+  kubectl --context ${context}  -n bookinfo annotate service productpage networking.istio.io/traffic-distribution=Any
 done
 ```
 
@@ -317,6 +322,36 @@ Wait until a LB IP gets assigned to bookinfo-gateway-istio svc and then visit th
 curl $(kubectl get svc -n bookinfo bookinfo-gateway-istio --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")/productpage
 ```
 Voila! This should be round robinning between productpage on both clusters.
+
+### Automatic and Manual Failover
+
+#### productpage failover
+Scale down productpage on cluster1 to simulate a failure:
+```bash
+kubectl scale deploy productpage-v1 --replicas=0 --context $CLUSTER1
+```
+Visit the application in your browser and you'll see traffic is not impacted because we're failing over to cluster2 automatically.
+
+Scale productpage back up:
+```bash
+kubectl scale deploy productpage-v1 --replicas=1 --context $CLUSTER1
+```
+#### details failover
+We can also scale down other services. Lets enable `details` to be multi-cluster and scale it down
+```bash
+kubectl --context $CLUSTER1 -n bookinfo label service details solo.io/service-scope=global-only 
+kubectl --context $CLUSTER2  -n bookinfo label service details solo.io/service-scope=global-only 
+```
+```bash
+kubectl scale deploy details-v1 --replicas=0 --context $CLUSTER1
+```
+
+Visit the application in your browser and you'll see traffic is not impacted because we're failing over from productpage.cluster1 to bookinfo.cluster2 automatically.
+
+Scale details back up:
+```bash
+kubectl scale deploy details-v1 --replicas=2 --context $CLUSTER1
+```
 
 
 ### Istio Waypoints for L7 Functionality
@@ -497,7 +532,7 @@ Optionally, you can deploy the Gloo Management Plane that provides many benefits
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.7.2 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.8.0 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
@@ -507,8 +542,8 @@ Cluster1 will act as the management cluster and workload cluster: (see [mgmt-val
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1 --kube-context=$CLUSTER1
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.8.0 --kube-context=$CLUSTER1
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.8.0 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
