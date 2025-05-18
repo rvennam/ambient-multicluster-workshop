@@ -251,7 +251,20 @@ for context in ${CLUSTER1} ${CLUSTER2}; do
 done
 ```
 
-Enable productpage to be multi-cluster on both clusters
+### Enable productpage to be multi-cluster on both clusters. 
+
+To make productpage available across clusters, we have the option of one of the following labels on its Kubernetes Service:
+
+**solo.io/service-scope=global**
+	•	Creates a new global service:
+<name>.<namespace>.mesh.internal
+	•	The original service (<name>.<namespace>.svc.cluster.local) remains unchanged and includes only local endpoints.
+
+**solo.io/service-scope=global-only**
+	•	Modifies the original service to include both local and remote endpoints.
+	•	No additional service is created; remote endpoints are merged into the existing service DNS.
+
+Lets use the first option:
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
   kubectl --context ${context}  -n bookinfo label service productpage solo.io/service-scope=global
@@ -326,6 +339,7 @@ Voila! This should be round robinning between productpage on both clusters.
 ### Automatic and Manual Failover
 
 #### productpage failover
+![alt text](image-5.png)
 Scale down productpage on cluster1 to simulate a failure:
 ```bash
 kubectl scale deploy productpage-v1 --replicas=0 --context $CLUSTER1
@@ -337,6 +351,7 @@ Scale productpage back up:
 kubectl scale deploy productpage-v1 --replicas=1 --context $CLUSTER1
 ```
 #### details failover
+![alt text](image-6.png)
 We can also scale down other services. Lets enable `details` to be multi-cluster and scale it down
 ```bash
 kubectl --context $CLUSTER1 -n bookinfo label service details solo.io/service-scope=global-only 
