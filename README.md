@@ -255,14 +255,14 @@ done
 
 To make productpage available across clusters, we have the option of one of the following labels on its Kubernetes Service:
 
-**solo.io/service-scope=global**
-	•	Creates a new global service:
-<name>.<namespace>.mesh.internal
-	•	The original service (<name>.<namespace>.svc.cluster.local) remains unchanged and includes only local endpoints.
+#### solo.io/service-scope=global
+- Creates a new global service:
+`<name>.<namespace>.mesh.internal`
+- The original service (`<name>.<namespace>.svc.cluster.local`) remains unchanged and includes only local endpoints.
 
-**solo.io/service-scope=global-only**
-	•	Modifies the original service to include both local and remote endpoints.
-	•	No additional service is created; remote endpoints are merged into the existing service DNS.
+#### solo.io/service-scope=global-only
+- Modifies the original service to include both local and remote endpoints.
+- No additional service is created; remote endpoints are merged into the existing service DNS.
 
 Lets use the first option:
 ```bash
@@ -273,6 +273,8 @@ done
 ```
 
 ### Expose Productpage using Istio Gateway
+
+![alt text](image-7.png)
 
 Apply the following Kubernetes Gateway API resources to cluster1 to expose productpage service using an Istio gateway:
 
