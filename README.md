@@ -382,8 +382,7 @@ Let’s apply a Waypoint for the bookinfo namespace and create a header-based ro
 
 ```bash
 for context in ${CLUSTER1} ${CLUSTER2}; do
-  istioctl --context=${context} waypoint apply -n bookinfo
-  kubectl --context=${context} label ns bookinfo istio.io/use-waypoint=waypoint
+  kubectl --context=${context} label ns bookinfo istio.io/use-waypoint=auto
   kubectl --context=${context} apply -f ./reviews-v1.yaml 
 done
 ```

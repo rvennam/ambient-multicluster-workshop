@@ -18,47 +18,6 @@ helm upgrade --kube-context ${MGMT} -i gloo-platform-crds gloo-platform/gloo-pla
 helm upgrade --kube-context ${MGMT} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.8.0 --values mgmt-values-dedicated.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 
-helm upgrade --install gloo-platform gloo-platform \
-  --repo https://storage.googleapis.com/gloo-platform/helm-charts \
-  --namespace gloo-mesh \
-  --kube-context ${MGMT} \
-  --version 2.8.0 \
-  -f -<<EOF
-licensing:
-  glooTrialLicenseKey: ${GLOO_MESH_LICENSE_KEY}
-common:
-  cluster: mgmt
-experimental:
-  ambientEnabled: true
-glooInsightsEngine:
-  enabled: true
-glooMgmtServer:
-  enabled: true
-  policyApis:
-    enabled: false
-  ports:
-    healthcheck: 8091
-redis:
-  deployment:
-    enabled: true
-telemetryGateway:
-  enabled: true
-  service:
-    type: LoadBalancer
-prometheus:
-  enabled: true
-glooUi:
-  enabled: true
-  serviceType: LoadBalancer
-telemetryCollector:
-  enabled: true
-  config:
-    exporters:
-      otlp:
-        endpoint: gloo-telemetry-gateway:4317
-featureGates:
-EOF
-
 kubectl --context ${MGMT} -n gloo-mesh rollout status deploy/gloo-mesh-mgmt-server
 ```
 

@@ -98,16 +98,26 @@ done
 Install Istio CRD's on cluster1 and cluster2:
 
 ```bash
-for context in ${CLUSTER1} ${CLUSTER2}; do
-    helm upgrade --install istio-base oci://${HELM_REPO}/base \
-    --namespace istio-system \
-    --create-namespace \
-    --version ${ISTIO_IMAGE} \
-    -f - <<EOF
+helm upgrade --install istio-base oci://${HELM_REPO}/base \
+--namespace istio-system \
+--kube-context ${CLUSTER1} \
+--create-namespace \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
 defaultRevision: ""
 profile: ambient
 EOF
-done
+```
+```bash
+helm upgrade --install istio-base oci://${HELM_REPO}/base \
+--namespace istio-system \
+--kube-context ${CLUSTER2} \
+--create-namespace \
+--version ${ISTIO_IMAGE} \
+-f - <<EOF
+defaultRevision: ""
+profile: ambient
+EOF
 ```
 
 Apply the CRDs for the Kubernetes Gateway API to your cluster, which are required to create components such as waypoint proxies for L7 traffic policies, gateways with the Gateway resource, and more.
