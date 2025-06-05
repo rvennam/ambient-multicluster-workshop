@@ -506,9 +506,14 @@ istioctl bootstrap --namespace vm1 --service-account vm1
 
 This command creates a bootstrap token that will be used by the VM to authenticate with the mesh.
 
-#### Step 2: Set the Bootstrap Token
 
-Extract the token generated in the previous step and set it as an environment variable:
+#### Step 2:SSH into the VM 
+
+ssh into the VM before proceeding to the next step.
+
+#### Step 3: Set the Bootstrap Token
+
+SSH into the VM Extract the token generated in the previous step and set it as an environment variable:
 
 ```bash
 export BOOTSTRAP_TOKEN=<set from previous command>
@@ -516,7 +521,7 @@ export BOOTSTRAP_TOKEN=<set from previous command>
 
 Replace `<set from previous command>` with the actual token value.
 
-#### Step 3: Run ztunnel on the VM
+#### Step 4: Run ztunnel on the VM
 
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
@@ -526,7 +531,7 @@ docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} --network=host us-docker.pkg
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
 
-#### Step 4: Test Connectivity from the VM to the Mesh
+#### Step 5: Test Connectivity from the VM to the Mesh
 
 Once the ztunnel is running, you can test connectivity from the VM to services in the mesh. Use the following commands to verify that the VM can communicate with the `productpage` service in the `bookinfo` namespace:
 
