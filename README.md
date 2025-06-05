@@ -526,7 +526,7 @@ Replace `<set from previous command>` with the actual token value.
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
 ```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} --network=host us-docker.pkg.dev/gloo-mesh/istio-e038d180f90a/ztunnel:1.25.1-solo-distroless
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-e038d180f90a/ztunnel:1.25.1-solo-distroless
 ```
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
