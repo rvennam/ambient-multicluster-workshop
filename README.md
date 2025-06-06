@@ -513,7 +513,7 @@ ssh into the VM before proceeding to the next step.
 
 #### Step 3: Set the Bootstrap Token
 
-SSH into the VM Extract the token generated in the previous step and set it as an environment variable:
+Copy the token from generated in Step 1 and set it as an environment variable on the VM:
 
 ```bash
 export BOOTSTRAP_TOKEN=<set from previous command>
