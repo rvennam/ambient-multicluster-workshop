@@ -344,30 +344,30 @@ Voila! This should be round robinning between productpage on both clusters.
 ![alt text](image-5.png)
 Scale down productpage on cluster1 to simulate a failure:
 ```bash
-kubectl scale deploy productpage-v1 --replicas=0 --context $CLUSTER1
+kubectl scale deploy  -n bookinfo productpage-v1 --replicas=0 --context $CLUSTER1
 ```
 Visit the application in your browser and you'll see traffic is not impacted because we're failing over to cluster2 automatically.
 
 Scale productpage back up:
 ```bash
-kubectl scale deploy productpage-v1 --replicas=1 --context $CLUSTER1
+kubectl scale deploy  -n bookinfo productpage-v1 --replicas=1 --context $CLUSTER1
 ```
 #### details failover
 ![alt text](image-6.png)
 We can also scale down other services. Lets enable `details` to be multi-cluster and scale it down
 ```bash
 kubectl --context $CLUSTER1 -n bookinfo label service details solo.io/service-scope=global-only 
-kubectl --context $CLUSTER2  -n bookinfo label service details solo.io/service-scope=global-only 
+kubectl --context $CLUSTER2 -n bookinfo label service details solo.io/service-scope=global-only 
 ```
 ```bash
-kubectl scale deploy details-v1 --replicas=0 --context $CLUSTER1
+kubectl scale deploy -n bookinfo details-v1 --replicas=0 --context $CLUSTER1
 ```
 
 Visit the application in your browser and you'll see traffic is not impacted because we're failing over from productpage.cluster1 to bookinfo.cluster2 automatically.
 
 Scale details back up:
 ```bash
-kubectl scale deploy details-v1 --replicas=2 --context $CLUSTER1
+kubectl scale deploy -n bookinfo details-v1 --replicas=2 --context $CLUSTER1
 ```
 
 
