@@ -9,13 +9,13 @@ In this workshop, you will set up Istio Ambient in a single cluster environment,
 export CLUSTER1=gke_ambient_one # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
-2. Download Solo's 1.25.0 `istioctl` Binary:
+2. Download Solo's 1.25.3 `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/1.25.0-solo/istioctl-1.25.0-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-e038d180f90a/1.25.3-solo/istioctl-1.25.3-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -51,7 +51,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.25.1
+  version: 1.25.3
   cluster: cluster1
   network: cluster1
 EOF
@@ -137,7 +137,7 @@ Let’s apply a Waypoint for the bookinfo namespace and create a header-based ro
 ```bash
   istioctl --context=${CLUSTER1} waypoint apply -n bookinfo
   kubectl --context=${CLUSTER1} label ns bookinfo istio.io/use-waypoint=waypoint
-  kubectl --context=${CLUSTER1}apply -f ./reviews-v1.yaml 
+  kubectl --context=${CLUSTER1} apply -f ./reviews-v1.yaml 
 ```
 
 # Egress Gateway
