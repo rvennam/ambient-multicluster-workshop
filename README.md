@@ -258,11 +258,12 @@ To make productpage available across clusters, we have the option of one of the 
 #### solo.io/service-scope=global
 - Creates a new global service:
 `<name>.<namespace>.mesh.internal`
-- The original service (`<name>.<namespace>.svc.cluster.local`) remains unchanged and includes only local endpoints.
+- Calls to the service using the standard Kubernetes hostnames (`<name>` or `<name>.<namespace>`, or `<name>.<namespace>.svc.cluster.local`) remains unchanged and includes only local endpoints.
 
 #### solo.io/service-scope=global-only
-- Modifies the original service to include both local and remote endpoints.
-- No additional service is created; remote endpoints are merged into the existing service DNS.
+- Creates a new global service:
+`<name>.<namespace>.mesh.internal`
+- Calls to the service using the standard Kubernetes hostnames (`<name>` or `<name>.<namespace>`, or `<name>.<namespace>.svc.cluster.local`) also get routing to both local and remote (other clusters) endpoints.
 
 Lets use the first option:
 ```bash
