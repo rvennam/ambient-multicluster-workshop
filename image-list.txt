@@ -1,12 +1,12 @@
 # Solo's Istio Images
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.2-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.3-solo
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.3-solo
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.3-solo
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.3-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.3-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.3-solo-distroless
 
 # Gloo Management Plane
 gcr.io/gloo-mesh/prometheus:v2.53.4
