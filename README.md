@@ -14,13 +14,13 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
-2. Download Solo's 1.26.2 `istioctl` Binary:
+2. Download Solo's 1.26.3 `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-d4cba2aff3ef/1.26.2-solo/istioctl-1.26.2-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-d4cba2aff3ef/1.26.3-solo/istioctl-1.26.3-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -85,7 +85,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.26.2
+  version: 1.26.3
   cluster: cluster1
   network: cluster1
 EOF
@@ -96,7 +96,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.26.2
+  version: 1.26.3
   cluster: cluster2
   network: cluster2
 EOF
@@ -527,7 +527,7 @@ Replace `<set from previous command>` with the actual token value.
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
 ```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.2-solo-distroless
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo-distroless
 ```
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
