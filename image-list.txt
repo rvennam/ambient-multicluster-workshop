@@ -1,23 +1,27 @@
 # Solo's Istio Images
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.3-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.3-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.3-solo
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/install-cni:1.26.3-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/pilot:1.26.3-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/proxyv2:1.26.3-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.0-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.0-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.0-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.0-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.0-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.0-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.0-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.0-solo-distroless
+
+# Operator
+us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator:0.3.0
 
 # Gloo Management Plane
-gcr.io/gloo-mesh/prometheus:v2.53.4
+
+gcr.io/gloo-mesh/prometheus:v3.5.0
 gcr.io/gloo-mesh/redis:7.4.2-alpine
-quay.io/prometheus-operator/prometheus-config-reloader:v0.74.0
-gcr.io/gloo-mesh/gloo-mesh-agent:2.9.2
-gcr.io/gloo-mesh/gloo-mesh-analyzer:2.9.2
-gcr.io/gloo-mesh/gloo-mesh-apiserver:2.9.2
-gcr.io/gloo-mesh/gloo-mesh-envoy:2.9.2
-gcr.io/gloo-mesh/gloo-mesh-mgmt-server:2.9.2
-gcr.io/gloo-mesh/gloo-mesh-ui:2.9.2
+quay.io/prometheus-operator/prometheus-config-reloader:v0.84.0
+gcr.io/gloo-mesh/gloo-mesh-agent:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-analyzer:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-apiserver:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-envoy:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-mgmt-server:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-ui:2.10.0
 gcr.io/gloo-mesh/otel-collector:0.2.4
 
 # Bookinfo Sample
@@ -29,11 +33,11 @@ docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
 docker.io/istio/examples-bookinfo-reviews-v3:1.20.3
 
 # OCI HELM repos
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d4cba2aff3ef/base
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d4cba2aff3ef/istiod
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d4cba2aff3ef/cni
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d4cba2aff3ef/ztunnel
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d4cba2aff3ef/gateway
+oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/base
+oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/istiod
+oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/cni
+oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/ztunnel
+oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/gateway
 
 # non-OCI Helm repos
 https://storage.googleapis.com/gloo-platform/helm-charts # Charts gloo-platform and gloo-platform-crs
