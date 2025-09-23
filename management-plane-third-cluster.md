@@ -14,8 +14,8 @@ export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade --kube-context ${MGMT} -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.9.1
-helm upgrade --kube-context ${MGMT} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.9.1 --values mgmt-values-dedicated.yaml \
+helm upgrade --kube-context ${MGMT} -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.10.0
+helm upgrade --kube-context ${MGMT} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.10.0 --values mgmt-values-dedicated.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 
 kubectl --context ${MGMT} -n gloo-mesh rollout status deploy/gloo-mesh-mgmt-server
@@ -65,13 +65,13 @@ helm upgrade --install gloo-platform-crds gloo-platform-crds \
   --namespace gloo-mesh \
   --set installEnterpriseCrds=false \
   --kube-context ${CLUSTER1} \
-  --version 2.9.1
+  --version 2.10.0
 
 helm upgrade --install gloo-platform gloo-platform \
   --repo https://storage.googleapis.com/gloo-platform/helm-charts \
   --namespace gloo-mesh \
   --kube-context ${CLUSTER1} \
-  --version 2.9.1 \
+  --version 2.10.0 \
   -f -<<EOF
 common:
   cluster: cluster1
@@ -123,13 +123,13 @@ helm upgrade --install gloo-platform-crds gloo-platform-crds \
   --namespace gloo-mesh \
   --set installEnterpriseCrds=false \
   --kube-context ${CLUSTER2} \
-  --version 2.9.1
+  --version 2.10.0
 
 helm upgrade --install gloo-platform gloo-platform \
   --repo https://storage.googleapis.com/gloo-platform/helm-charts \
   --namespace gloo-mesh \
   --kube-context ${CLUSTER2} \
-  --version 2.9.1 \
+  --version 2.10.0 \
   -f -<<EOF
 common:
   cluster: cluster2

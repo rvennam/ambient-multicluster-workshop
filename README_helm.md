@@ -15,8 +15,8 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.27.0
-export REPO_KEY=d11c80c0c3fc
+export ISTIO_VERSION=1.26.3
+export REPO_KEY=4d37697f9711
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
