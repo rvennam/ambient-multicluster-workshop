@@ -7,15 +7,17 @@ In this workshop, you will set up Istio Ambient in a single cluster environment,
 1. Create a cluster and set the env vars below to their context
 ```bash
 export CLUSTER1=gke_ambient_one # UPDATE THIS
+export REPO_KEY=d11c80c0c3fc
+export ISTIO_VERSION=1.27.2
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
-2. Download Solo's 1.26.3 `istioctl` Binary:
+2. Download Solo's `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-4d37697f9711/1.26.3-solo/istioctl-1.26.3-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-${REPO_KEY}/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -38,7 +40,7 @@ Install the operator
 ```bash
   helm upgrade -i --kube-context=${CLUSTER1} gloo-operator \
     oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
-    --version 0.2.3 -n gloo-system --create-namespace \
+    --version 0.4.0 -n gloo-system --create-namespace \
     --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} \
     --set manager.image.repository=us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator &
 ```
@@ -51,7 +53,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.26.3
+  version: 1.27.2
   cluster: cluster1
   network: cluster1
 EOF

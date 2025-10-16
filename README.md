@@ -12,15 +12,17 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 ```bash
 export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
+export REPO_KEY=d11c80c0c3fc
+export ISTIO_VERSION=1.27.2
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
-2. Download Solo's 1.26.3 `istioctl` Binary:
+1. Download Solo's `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-d4cba2aff3ef/1.26.3-solo/istioctl-1.26.3-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-${REPO_KEY}/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
@@ -71,7 +73,7 @@ Install the operator
 for context in ${CLUSTER1} ${CLUSTER2}; do
   helm upgrade -i --kube-context=${context} gloo-operator \
     oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
-    --version 0.3.0 -n gloo-system --create-namespace \
+    --version 0.4.0 -n gloo-system --create-namespace \
     --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} \
     --set manager.image.repository=us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator &
 done
@@ -85,7 +87,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.26.3
+  version: 1.27.2
   cluster: cluster1
   network: cluster1
 EOF
@@ -96,7 +98,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.26.3
+  version: 1.27.2
   cluster: cluster2
   network: cluster2
 EOF
@@ -242,6 +244,24 @@ spec:
 EOF
 ```
 </details>
+
+
+Let's make sure we did everything right!
+
+```
+istioctl --context $CLUSTER1 multicluster check
+istioctl --context $CLUSTER2 multicluster check
+```
+
+We should expect to see:
+```
+✅ License Check: license is valid for multicluster
+✅ Pod Check (istiod): all pods healthy
+✅ Pod Check (ztunnel): all pods healthy
+✅ Pod Check (eastwest gateway): all pods healthy
+✅ Gateway Check: all eastwest gateways programmed
+✅ Peers Check: all clusters connected
+```
 
 ### Enable Istio for bookinfo Namespace
 
@@ -527,7 +547,7 @@ Replace `<set from previous command>` with the actual token value.
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
 ```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef/ztunnel:1.26.3-solo-distroless
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo-distroless
 ```
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
@@ -554,7 +574,7 @@ Optionally, you can deploy the Gloo Management Plane that provides many benefits
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.8.0 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.10.1 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
@@ -564,8 +584,8 @@ Cluster1 will act as the management cluster and workload cluster: (see [mgmt-val
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.8.0 --kube-context=$CLUSTER1
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.8.0 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.10.1 --kube-context=$CLUSTER1
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.10.1 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 

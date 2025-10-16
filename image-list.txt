@@ -1,12 +1,12 @@
 # Solo's Istio Images
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.0-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.0-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.0-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.0-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.0-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.0-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.0-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.0-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.2-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.2-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.2-solo
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.2-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.2-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo-distroless
+us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.2-solo-distroless
 
 # Operator
 us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator:0.3.0
@@ -16,12 +16,12 @@ us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator:0.3.0
 gcr.io/gloo-mesh/prometheus:v3.5.0
 gcr.io/gloo-mesh/redis:7.4.2-alpine
 quay.io/prometheus-operator/prometheus-config-reloader:v0.84.0
-gcr.io/gloo-mesh/gloo-mesh-agent:2.10.0
-gcr.io/gloo-mesh/gloo-mesh-analyzer:2.10.0
-gcr.io/gloo-mesh/gloo-mesh-apiserver:2.10.0
-gcr.io/gloo-mesh/gloo-mesh-envoy:2.10.0
-gcr.io/gloo-mesh/gloo-mesh-mgmt-server:2.10.0
-gcr.io/gloo-mesh/gloo-mesh-ui:2.10.0
+gcr.io/gloo-mesh/gloo-mesh-agent:2.10.1
+gcr.io/gloo-mesh/gloo-mesh-analyzer:2.10.1
+gcr.io/gloo-mesh/gloo-mesh-apiserver:2.10.1
+gcr.io/gloo-mesh/gloo-mesh-envoy:2.10.1
+gcr.io/gloo-mesh/gloo-mesh-mgmt-server:2.10.1
+gcr.io/gloo-mesh/gloo-mesh-ui:2.10.1
 gcr.io/gloo-mesh/otel-collector:0.2.4
 
 # Bookinfo Sample
