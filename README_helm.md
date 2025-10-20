@@ -15,8 +15,8 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.26.3
-export REPO_KEY=4d37697f9711
+export ISTIO_VERSION=1.27.2
+export REPO_KEY=d11c80c0c3fc
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
@@ -317,13 +317,168 @@ kubectl label namespace istio-system --context ${CLUSTER2} topology.istio.io/net
 ### Peer the clusters together
 
 Expose using an east-west gateway:
-```bash
-istioctl --context=${CLUSTER1} multicluster expose --wait -n istio-gateways
-istioctl --context=${CLUSTER2} multicluster expose --wait -n istio-gateways
+
+Option 1: CLI - Use istioctl 
+
 ```
+istioctl --context=${CLUSTER1} multicluster expose -n istio-gateways
+istioctl --context=${CLUSTER2} multicluster expose -n istio-gateways
+```
+
+Option 2: Declarative - Gateway CRD
+
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
+
+```bash
+kubectl apply --context $CLUSTER1 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/expose-istiod: "15012"
+    topology.istio.io/network: cluster1
+  name: istio-eastwest
+  namespace: istio-gateways
+spec:
+  gatewayClassName: istio-eastwest
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+```
+```bash
+kubectl apply --context $CLUSTER2 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/expose-istiod: "15012"
+    topology.istio.io/network: cluster2
+  name: istio-eastwest
+  namespace: istio-gateways
+spec:
+  gatewayClassName: istio-eastwest
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+```
+</details>
+
 Link clusters together:
+
+Option 1: CLI - Use istioctl 
+
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
+```
+
+Option 2: Declarative - Gateway CRD
+<details>
+
+<summary>Instead of using istioctl, you can also apply yaml</summary>
+
+```bash
+export CLUSTER1_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER1 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+export CLUSTER2_EW_ADDRESS=$(kubectl get svc -n istio-gateways istio-eastwest --context $CLUSTER2 -o jsonpath="{.status.loadBalancer.ingress[0]['hostname','ip']}")
+
+echo "Cluster 1 east-west gateway: $CLUSTER1_EW_ADDRESS"
+echo "Cluster 2 east-west gateway: $CLUSTER2_EW_ADDRESS"
+
+kubectl apply --context $CLUSTER1 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    gateway.istio.io/service-account: istio-eastwest
+    gateway.istio.io/trust-domain: cluster2
+  labels:
+    topology.istio.io/network: cluster2
+  name: istio-remote-peer-cluster2
+  namespace: istio-gateways
+spec:
+  addresses:
+  - type: IPAddress
+    value: $CLUSTER2_EW_ADDRESS
+  gatewayClassName: istio-remote
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+
+kubectl apply --context $CLUSTER2 -f- <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    gateway.istio.io/service-account: istio-eastwest
+    gateway.istio.io/trust-domain: cluster1
+  labels:
+    topology.istio.io/network: cluster1
+  name: istio-remote-peer-cluster1
+  namespace: istio-gateways
+spec:
+  addresses:
+  - type: IPAddress
+    value: $CLUSTER1_EW_ADDRESS
+  gatewayClassName: istio-remote
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
+EOF
+```
+</details>
+
+
+Let's make sure we did everything right!
+
+```
+istioctl --context $CLUSTER1 multicluster check
+istioctl --context $CLUSTER2 multicluster check
+```
+
+We should expect to see:
+```
+✅ License Check: license is valid for multicluster
+✅ Pod Check (istiod): all pods healthy
+✅ Pod Check (ztunnel): all pods healthy
+✅ Pod Check (eastwest gateway): all pods healthy
+✅ Gateway Check: all eastwest gateways programmed
+✅ Peers Check: all clusters connected
 ```
 
 
