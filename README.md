@@ -292,6 +292,7 @@ for context in ${CLUSTER1} ${CLUSTER2}; do
   kubectl --context ${context}  -n bookinfo annotate service productpage networking.istio.io/traffic-distribution=Any
 done
 ```
+**Tip:** The `solo.io/service-scope=global` label can also be on the _namespace_, which makes all the services in the namespace global
 
 ### Expose Productpage using Istio Gateway
 
