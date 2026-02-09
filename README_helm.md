@@ -15,8 +15,8 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.27.2
-export REPO_KEY=d11c80c0c3fc
+export ISTIO_VERSION=1.28.3
+export REPO_KEY=594e990587b9
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
@@ -27,7 +27,7 @@ OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
 mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-d11c80c0c3fc/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-${REPO_KEY}/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
 chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
