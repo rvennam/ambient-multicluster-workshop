@@ -325,16 +325,12 @@ kubectl label namespace istio-system --context ${CLUSTER2} topology.istio.io/net
 
 ### Peer the clusters together
 
-Expose using an east-west gateway:
-
-Option 1: CLI - Use istioctl 
+**Create an east-west gateway:**
 
 ```
 istioctl --context=${CLUSTER1} multicluster expose -n istio-gateways
 istioctl --context=${CLUSTER2} multicluster expose -n istio-gateways
 ```
-
-Option 2: Declarative - Gateway CRD
 
 <details>
 
@@ -392,15 +388,13 @@ EOF
 ```
 </details>
 
-Link clusters together:
+**Link clusters together:**
 
-Option 1: CLI - Use istioctl 
 
 ```bash
 istioctl multicluster link --contexts=$CLUSTER1,$CLUSTER2 -n istio-gateways
 ```
 
-Option 2: Declarative - Gateway CRD
 <details>
 
 <summary>Instead of using istioctl, you can also apply yaml</summary>
@@ -473,7 +467,7 @@ EOF
 </details>
 
 
-Let's make sure we did everything right!
+**Let's make sure we did everything right!**
 
 ```
 istioctl --context $CLUSTER1 multicluster check
