@@ -57,20 +57,29 @@ done
 ### Configure Trust - Issue Intermediate Certs
 
 ```bash
-for context in ${CLUSTER1} ${CLUSTER2}; do
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.3 sh -
+cd istio-1.28.3
+
+mkdir -p certs
+pushd certs
+make -f ../tools/certs/Makefile.selfsigned.mk root-ca
+
+function create_cacerts_secret() {
+  context=${1:?context}
+  cluster=${2:?cluster}
+  make -f ../tools/certs/Makefile.selfsigned.mk ${cluster}-cacerts
   kubectl --context=${context} create ns istio-system || true
-  kubectl --context=${context} create ns istio-gateways || true
-done
-kubectl --context=${CLUSTER1} create secret generic cacerts -n istio-system \
---from-file=./certs/cluster1/ca-cert.pem \
---from-file=./certs/cluster1/ca-key.pem \
---from-file=./certs/cluster1/root-cert.pem \
---from-file=./certs/cluster1/cert-chain.pem
-kubectl --context=${CLUSTER2} create secret generic cacerts -n istio-system \
---from-file=./certs/cluster2/ca-cert.pem \
---from-file=./certs/cluster2/ca-key.pem \
---from-file=./certs/cluster2/root-cert.pem \
---from-file=./certs/cluster2/cert-chain.pem
+  kubectl --context=${context} create secret generic cacerts -n istio-system \
+    --from-file=${cluster}/ca-cert.pem \
+    --from-file=${cluster}/ca-key.pem \
+    --from-file=${cluster}/root-cert.pem \
+    --from-file=${cluster}/cert-chain.pem
+}
+
+create_cacerts_secret ${CLUSTER1} cluster1
+create_cacerts_secret ${CLUSTER2} cluster2
+
+cd ../..
 ```
 
 GKE Only:
